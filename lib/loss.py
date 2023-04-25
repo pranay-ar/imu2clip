@@ -4,6 +4,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 
 class InfoNCE(nn.Module):
@@ -74,8 +75,6 @@ def info_nce(
 
     # Check matching number of samples.
     if len(query) != len(positive_key):
-        print("Query shape:", query.shape)
-        print("Positive key shape:", positive_key.shape)
         raise ValueError(
             "<query> and <positive_key> must must have the same number of samples."
         )
@@ -98,6 +97,9 @@ def info_nce(
 
     # Normalize to unit vectors
     query, positive_key, negative_keys = normalize(query, positive_key, negative_keys)
+    # print("Query", query)
+    # print("Positive Key", positive_key)
+    # print("Negative Keys", negative_keys)
 
     if negative_keys is not None:
         # Explicit negative keys
@@ -141,3 +143,54 @@ def transpose(x):
 
 def normalize(*xs):
     return [None if x is None else F.normalize(x, dim=-1) for x in xs]
+
+
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class TripletLoss(nn.Module):
+    """
+    Triplet Loss for learning embeddings where the negative samples are implicitly defined
+    as all samples that are not the anchor or the positive sample.
+    """
+
+    def __init__(self, margin=0.2):
+        super().__init__()
+        self.margin = margin
+
+    def forward(self, anchor, positive):
+        # Compute pairwise distances
+        d_ap = F.pairwise_distance(anchor, positive, 2)
+
+        # Compute implicit negative examples
+        batch_size = anchor.shape[0]
+        indices = torch.arange(batch_size, device=anchor.device)
+        d_an = []
+        for i in range(batch_size):
+            neg_mask = ~torch.eq(indices, i)
+            neg_samples = anchor[neg_mask]
+            d_i = F.pairwise_distance(anchor[i].unsqueeze(0), neg_samples, 2)
+            d_an.append(d_i.min())
+        d_an = torch.stack(d_an)
+
+        # print("Positive distance = {} | Negative distance = {}".format(d_ap, d_an))
+        # Compute loss
+        loss = F.relu(d_ap - d_an + self.margin).mean()
+
+        # element_wise_loss = triplet_loss_debug(d_ap, d_an, margin=1.0)
+        # print("Element-wise loss = {}".format(element_wise_loss))
+
+        # # Plot a histogram of the element-wise loss values
+        # plt.hist(element_wise_loss.cpu().numpy(), bins=50)
+        # plt.xlabel('Triplet Loss')
+        # plt.ylabel('Count')
+        # plt.title('Histogram of Element-wise Triplet Loss')
+        # plt.savefig('triplet_loss_histogram_{}.png'.format(self.margin))
+
+        return loss
+    
+def triplet_loss_debug(d_ap, d_an, margin):
+    loss = torch.relu(d_ap - d_an + margin)
+    element_wise_loss = torch.mean(loss, dim=0)  # Calculate the loss element-wise
+    return element_wise_loss
