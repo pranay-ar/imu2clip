@@ -6,7 +6,7 @@ from datetime import datetime
 import torch
 import pytorch_lightning as pl
 from dataset.ego4d.dataloader import filter_narration, clean_narration_text
-from lib.imu_models import MW2StackRNNPooling
+from lib.imu_models import MW2StackRNNPooling, AttentionPooledIMUEncoder, PatchTransformer, PatchRNN
 from lib.clip_model import ClipPLModel
 from lib.train_modules import MultimodalContrastiveLearningModule
 from lib.data_modules import Ego4dDataModule, UnsupEgo4dDataModule, Split
@@ -53,7 +53,7 @@ def train(configs):
     )
 
     # Paths, etc.
-    path_root_save_dir = f"./saved/{model_name}"
+    path_root_save_dir = f"./saved/{imu_encoder_name}/{model_name}"
     if not os.path.exists(path_root_save_dir):
         os.makedirs(path_root_save_dir)
     target_modalities.sort()
@@ -115,7 +115,14 @@ def train(configs):
 
     if "imu" in list_modalities:
 
-        imu_encoder = MW2StackRNNPooling(size_embeddings=final_embedding_size)
+        if imu_encoder_name == 'mw2':
+            imu_encoder = MW2StackRNNPooling(size_embeddings=final_embedding_size)
+        elif imu_encoder_name == 'ap':
+            imu_encoder = AttentionPooledIMUEncoder(size_embeddings=final_embedding_size)
+        elif imu_encoder_name == 'prnn':
+            imu_encoder = PatchRNN(size_embeddings=final_embedding_size)
+        else:
+            imu_encoder = PatchTransformer(size_embeddings=final_embedding_size)
 
         if path_load_pretrained_imu_encoder:
             # Load the parameters

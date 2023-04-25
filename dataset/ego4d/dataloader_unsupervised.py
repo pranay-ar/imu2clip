@@ -46,7 +46,7 @@ class Ego4dDatasetUnsupervised(torch.utils.data.Dataset):
         shuffle_windows: bool = True,
     ):
         self.return_tuple = return_tuple
-        self.cache_imu = {"cache": cache_imu, "path": "/fsx/andreamad8/tmp/video_imu"}
+        self.cache_imu = {"cache": cache_imu, "path": "/home/pranayr_umass_edu/imu2clip/tmp"}
         if cache_imu and not os.path.exists(self.cache_imu["path"]):
             os.makedirs(self.cache_imu["path"], exist_ok=True)
         self.window_sec = window_sec
@@ -65,7 +65,10 @@ class Ego4dDatasetUnsupervised(torch.utils.data.Dataset):
             bad_imus = set([f"{uid}_{start}_{end}" for uid, start, end in bad_imus])
 
         self.window_idx = []
+        self.window_video_id = []
         for video_uid in tqdm(self.meta_video.keys()):
+            if video_uid not in self.meta_video:
+                continue
             if not filter_video_uids(video_uid):
                 continue
             if not self.check_modality_clip_uid(video_uid):
@@ -104,9 +107,11 @@ class Ego4dDatasetUnsupervised(torch.utils.data.Dataset):
                     continue
 
                 self.window_idx.append(input_dict)
+                self.window_video_id.append(video_uid)
                 n_windows_per_video += 1
 
         print(f"There are {len(self.window_idx)} windows to process.")
+        print(f"There are {len(set(self.window_video_id))} videos to process.")
 
     def check_modality_clip_uid(self, video_uid):
         """

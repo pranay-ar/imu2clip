@@ -3,7 +3,7 @@
 
 import torch
 import pytorch_lightning as pl
-from lib.loss import InfoNCE
+from lib.loss import InfoNCE, TripletLoss
 import torchmetrics
 
 
@@ -24,6 +24,7 @@ class MultimodalContrastiveLearningModule(pl.LightningModule):
         self.list_modalities = modality_to_encoder.keys()
 
         self.loss = InfoNCE(symmetric_loss=True)
+        # self.loss = TripletLoss()
 
         if "imu" in self.list_modalities:
             self.imu_encoder = modality_to_encoder["imu"]
@@ -75,6 +76,9 @@ class MultimodalContrastiveLearningModule(pl.LightningModule):
         return out
 
     def training_step(self, batch, batch_idx: int):
+        # print("Query: ", len(batch["imu"]))
+        # print("Positive Sample: ", len(batch["narration"]))
+        # print("Negative Sample: ", neg_sample)
         return self._shared_eval(batch, batch_idx, "train")
 
     def validation_step(self, batch, batch_idx: int):
@@ -93,6 +97,7 @@ class MultimodalContrastiveLearningModule(pl.LightningModule):
         for target_modality in self.target_modalities:
             y_key_modality = y[target_modality]
             s2t_loss = self.loss(query=y_query_modality, positive_key=y_key_modality)
+            # s2t_loss = self.loss(anchor=y_query_modality, positive=y_key_modality)
             loss_output += s2t_loss
             s_t_accuracy, t_s_accuracy = evaluate_batch_similarity(
                 y_query_modality, y_key_modality, device=self.device
@@ -129,6 +134,7 @@ class MultimodalContrastiveLearningModule(pl.LightningModule):
         for target_modality in self.target_modalities:
             y_key_modality = y[target_modality]
             s2t_loss = self.loss(query=y_query_modality, positive_key=y_key_modality)
+            # s2t_loss = self.loss(anchor=y_query_modality, positive=y_key_modality)
 
             # Log the loss
             str_s2t = "{source_modality_initial}2{target_modality_initial}".format(
@@ -143,6 +149,8 @@ class MultimodalContrastiveLearningModule(pl.LightningModule):
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=2e-4)
+        # return torch.optim.Adagrad(self.parameters(), lr=2e-4)
+        # return torch.optim.RMSprop(self.parameters(), lr=2e-4)
 
 
 def evaluate_batch_similarity(source_embeddings, target_embeddings, device):

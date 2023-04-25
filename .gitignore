@@ -1,2 +1,16 @@
 __pycache__/
-saved/
+logs/
+slurm_jobs/
+lightning_logs/
+results/
+checkpoint
+ego4d_data
+new_data
+processed_imu.tar.gz
+shane_models/
+helper/
+/work/pi_adrozdov_umass_edu/pranayr_umass_edu/tmp
+/work/pi_adrozdov_umass_edu/pranayr_umass_edu/saved
+saved
+tmp
+.nfsf2ebf8639865bda0000116ba

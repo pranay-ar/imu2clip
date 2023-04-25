@@ -27,6 +27,7 @@ def evaluate(
     device = torch.device("cuda:0")
     target_modalities.sort()
     list_modalities = [source_modality] + target_modalities
+    print("list_modalities:", list_modalities)
     if "imu" in list_modalities:
         imu_encoder = model.imu_encoder
         imu_encoder.to(device)
@@ -134,6 +135,7 @@ def compute_metrics(source_embeddings, target_embeddings):
         query_batch = torch.mm(s[start:end], tt)  # (bsz, m) (m, n) -> (bsz, n)
         s_t_batch_results.append(query_batch)
     s_t_batch_results = torch.cat(s_t_batch_results, dim=0).view(-1)  # (n,n)
+    target = target.to(torch.device("cuda:0"))
     mrr = compute_mrr(s_t_batch_results, target, indexes=indexes).item()
     r1 = compute_r1(s_t_batch_results, target, indexes=indexes).item()
     r10 = compute_r10(s_t_batch_results, target, indexes=indexes).item()

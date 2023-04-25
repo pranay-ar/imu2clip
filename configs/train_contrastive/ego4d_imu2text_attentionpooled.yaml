@@ -3,7 +3,7 @@
 model_hparams:
   model_name: "i2c"
   model_suffix: "master"
-  imu_encoder_name: "mw2"
+  imu_encoder_name: "ap"
   video_encoder_name: "clip_1frame"
   window_sec: 2.5
   target_fps: 10

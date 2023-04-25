@@ -20,7 +20,7 @@ torchaudio.set_audio_backend("sox_io")
 import torchvision.io as io
 
 PATH_EGO_META = "./dataset/ego4d/ego4d.json"
-DATA_PATH = "/fsx/andreamad8/clips"
+DATA_PATH = "/home/pranayr_umass_edu/imu2clip/new_data"
 
 
 def load_json(json_path: str):
@@ -187,7 +187,7 @@ def padVIDEO(frames, fps, duration_sec):
 
 
 def index_narrations():
-    narration_raw = load_json("/datasets01/ego4d_track2/v1/annotations/narration.json")
+    narration_raw = load_json("/home/pranayr_umass_edu/imu2clip/ego4d_data/v1/annotations/narration.json")
 
     narration_dict = defaultdict(list)
     summary_dict = defaultdict(list)
