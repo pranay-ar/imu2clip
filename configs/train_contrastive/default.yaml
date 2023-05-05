@@ -14,7 +14,7 @@ train_hparams:
   target_modalities:
     - "text"
   limit_train_batches: 1.0
-  batch_size: 262144
+  batch_size: 256
   max_epochs: 1
   gpus: 1
   num_workers_for_dm: 10

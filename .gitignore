@@ -1,6 +1,7 @@
 __pycache__/
 logs/
 slurm_jobs/
+activity/
 lightning_logs/
 results/
 checkpoint

@@ -23,7 +23,7 @@ class Split(object):
         split: str = "training",
         video_uid_sample_rate: float = 1.0,
     ):
-        assert split in ["training", "validation", "test"]
+        assert split in ["training", "validation", "test", "predict"]
         self.set = load_json(f"./splits/{split}_{random_split}.json")
 
         if video_uid_sample_rate != 1.0:
@@ -64,6 +64,7 @@ class Ego4dDataModule(pl.LightningDataModule):
         self.filter_video_uids_train = Split(random_split=0, split="training")
         self.filter_video_uids_validation = Split(random_split=0, split="validation")
         self.filter_video_uids_test = Split(random_split=0, split="test")
+        self.filter_video_uids_predict = Split(random_split=0, split="predict")
 
     def get_dataset(
         self,
@@ -81,6 +82,9 @@ class Ego4dDataModule(pl.LightningDataModule):
 
         elif split == "test":
             filter_video_uids_split = self.filter_video_uids_test
+
+        elif split == "predict":
+            filter_video_uids_split = self.filter_video_uids_predict
 
         if video_uid_sample_rate != 1.0:
             filter_video_uids_split.scale(video_uid_sample_rate)
@@ -175,13 +179,13 @@ class SupervisedEgo4dDataModule(pl.LightningDataModule):
         self._log_hyperparams = True
 
         # Get splits ready
-        self.lable_dict = {
+        self.label_dict = {
             "head movement": 0,
             "stands up": 1,
             "sits down": 2,
             "walking": 3,
         }
-        self.n_classes = len(self.lable_dict)
+        self.n_classes = len(self.label_dict)
 
     def get_dataset(
         self,
@@ -196,7 +200,7 @@ class SupervisedEgo4dDataModule(pl.LightningDataModule):
             return_tuple=True,
             target_frames_in_window=self.dataset_params["target_fps"],
             window_set=load_csv(path),
-            class_dict=self.lable_dict,
+            class_dict=self.label_dict,
         )
 
     def setup(self, stage: Optional[str] = None):

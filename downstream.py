@@ -74,7 +74,8 @@ def train_downstream(configs):
 
     # get embeddings from label texts
     text_encoder = ClipPLModel(freeze=True)
-    label_texts = list(datamodule.lable_dict.keys())
+    label_texts = list(datamodule.label_dict.keys())
+    print("The labels are", label_texts)
 
     encoder = MW2StackRNNPooling(size_embeddings=512)
 
