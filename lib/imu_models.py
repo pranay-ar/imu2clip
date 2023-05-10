@@ -358,3 +358,52 @@ class MW2StackRNNPooling(pl.LightningModule):
     def forward(self, batch):
         # return the last hidden state
         return self.net(batch)[1][0]
+   
+class ConvTransformer(pl.LightningModule):
+    def __init__(
+        self,
+        input_channels: int = 6,
+        sequence_length: int = 1000,
+        kernel_size: int = 8,
+        num_heads: int = 8,
+        ff_hidden_size: int = 128,
+        size_embeddings:int = 128,
+        layers: int = 1,
+        cls_token: bool = True,
+    ):
+        """
+        input_channels: number of channels in the signal
+        sequence_length: length of the sequence
+        kernel_size: kernel size of the conv1d
+        num_heads: number of heads in the transformer
+        ff_hidden_size: feedforward model size.
+        size_embeddings: embedding size.
+        layers: number of transformer layers
+        cls_token: add a [CLS] token
+        """
+        super().__init__()
+        self.name = ConvTransformer
+        self.cls_token = cls_token
+
+        self.conv1d = nn.Conv1d(input_channels, size_embeddings, kernel_size, padding=(kernel_size - 1) // 2)
+        self.transformer = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(
+                d_model=size_embeddings,
+                nhead=num_heads,
+                dim_feedforward= ff_hidden_size,
+                batch_first=True,
+            ),
+            num_layers=layers,
+        )
+
+    def forward(self, batch):
+        batch = self.conv1d(batch)
+        batch = batch.permute(0, 2, 1)
+        if self.cls_token:
+            cls = torch.zeros(batch.shape[0], 1, batch.shape[2]).to(batch.device)
+            batch = torch.cat((cls, batch), dim=1)
+        batch = self.transformer(batch)
+        if self.cls_token:
+            return batch[:, 0, :]
+        else:
+            return torch.mean(batch, dim=1)

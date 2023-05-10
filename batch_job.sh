@@ -14,7 +14,8 @@ cd /home/pranayr_umass_edu/imu2clip/
 # bash run.sh /home/pranayr_umass_edu/imu2clip/configs/train_contrastive/ego4d_imu2text_patchrnn.yaml
 # bash run.sh /home/pranayr_umass_edu/imu2clip/configs/train_contrastive/ego4d_imu2text_patchtransformer.yaml
 # bash run.sh /home/pranayr_umass_edu/imu2clip/configs/train_contrastive/ego4d_imu2text_attentionpooled.yaml
-bash run.sh /home/pranayr_umass_edu/imu2clip/configs/train_contrastive/ego4d_imu2text_mw2.yaml
+# bash run.sh /home/pranayr_umass_edu/imu2clip/configs/train_contrastive/ego4d_imu2text_mw2.yaml
+bash run.sh /home/pranayr_umass_edu/imu2clip/configs/train_contrastive/ego4d_imu2text_convtransformer.yaml
 # bash downstream.sh /home/pranayr_umass_edu/imu2clip/configs/train_downstream/default.yaml /home/pranayr_umass_edu/imu2clip/shane_models/i2c_s_i_t_v_ie_mw2_w_5.0_master_imu_encoder.pt
 
 # cd /home/pranayr_umass_edu/meta_project/imu2clip/

@@ -6,13 +6,15 @@ from datetime import datetime
 import torch
 import pytorch_lightning as pl
 from dataset.ego4d.dataloader import filter_narration, clean_narration_text
-from lib.imu_models import MW2StackRNNPooling, AttentionPooledIMUEncoder, PatchTransformer, PatchRNN
+from lib.imu_models import MW2StackRNNPooling, AttentionPooledIMUEncoder, PatchTransformer, PatchRNN, ConvTransformer
 from lib.clip_model import ClipPLModel
 from lib.train_modules import MultimodalContrastiveLearningModule
 from lib.data_modules import Ego4dDataModule, UnsupEgo4dDataModule, Split
 from lib.evaluation import evaluate
 from argparse import ArgumentParser
 import yaml
+import warnings
+warnings.filterwarnings("ignore")
 
 def train(configs):
 
@@ -121,6 +123,8 @@ def train(configs):
             imu_encoder = AttentionPooledIMUEncoder(size_embeddings=final_embedding_size)
         elif imu_encoder_name == 'prnn':
             imu_encoder = PatchRNN(size_embeddings=final_embedding_size)
+        elif imu_encoder_name == 'ct':
+            imu_encoder = ConvTransformer(size_embeddings=final_embedding_size)
         else:
             imu_encoder = PatchTransformer(size_embeddings=final_embedding_size)
 
