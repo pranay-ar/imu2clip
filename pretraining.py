@@ -12,6 +12,8 @@ from lib.train_modules import MultimodalContrastiveLearningModule
 from lib.data_modules import Ego4dDataModule, UnsupEgo4dDataModule, Split
 from lib.evaluation import evaluate
 from argparse import ArgumentParser
+from pytorch_lightning.loggers import WandbLogger
+import wandb
 import yaml
 import warnings
 warnings.filterwarnings("ignore")
@@ -19,6 +21,8 @@ warnings.filterwarnings("ignore")
 def train(configs):
 
     random.seed(1234)
+    wandb.init(project="IMU2CLIP", config=configs)
+    
 
     # Load Model Parameters
     model_hparams = configs.get("model_hparams", {})
@@ -167,6 +171,7 @@ def train(configs):
     )
 
     # Initialize Trainer
+    wandb_logger = WandbLogger()
     trainer = pl.Trainer(
         max_epochs=max_epochs,
         gpus=gpus,
@@ -174,6 +179,7 @@ def train(configs):
         limit_train_batches=limit_train_batches,
         enable_checkpointing=True,
         callbacks=[checkpoint_callback],
+        logger = wandb_logger,
     )
 
     if not test_only:
@@ -218,6 +224,7 @@ def train(configs):
         configs,
     )
     print(metrics)
+    wandb.log(metrics)
     return metrics
 
 if __name__ == "__main__":
