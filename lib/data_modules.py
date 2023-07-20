@@ -274,9 +274,9 @@ class UnsupEgo4dDataModule(pl.LightningDataModule):
         )
 
         # Get splits ready
-        self.filter_video_uids_train = Split(random_split=0, split="training")
-        self.filter_video_uids_validation = Split(random_split=0, split="validation")
-        self.filter_video_uids_test = Split(random_split=0, split="test")
+        self.filter_video_uids_train = Split(random_split=7, split="training")
+        self.filter_video_uids_validation = Split(random_split=7, split="validation")
+        self.filter_video_uids_test = Split(random_split=7, split="test")
 
     def get_dataset(
         self,

@@ -23,7 +23,8 @@ from dataset.ego4d.utils.utils import (
 from typing import Callable, Dict, List, Optional
 
 random.seed(1234)
-DATA_PATH = "/fsx/andreamad8/full_videos"
+DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/full_videos"
+# DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/test"
 
 
 class Ego4dDataset(torch.utils.data.Dataset):

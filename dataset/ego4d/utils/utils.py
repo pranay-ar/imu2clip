@@ -20,7 +20,8 @@ torchaudio.set_audio_backend("sox_io")
 import torchvision.io as io
 
 PATH_EGO_META = "./dataset/ego4d/ego4d.json"
-DATA_PATH = "/home/pranayr_umass_edu/imu2clip/new_data"
+DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/full_videos"
+# DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/test"
 
 
 def load_json(json_path: str):
@@ -69,13 +70,25 @@ def save_npy(npy_path: str, np_array: np.ndarray):
         np.save(f_name, np_array)
 
 
-def get_ego4d_metadata(types: str = "clip"):
+def get_ego4d_metadata(types: str = "clip", data_path: str = DATA_PATH):
     """
     Get ego4d metadata
     """
-    return {
-        clip[f"{types}_uid"]: clip for clip in load_json(PATH_EGO_META)[f"{types}s"]
+    # List all files in the directory
+    videos = os.listdir(os.path.join(data_path, "processed_videos"))
+    
+    # Extract video ids from filenames
+    video_ids = [os.path.splitext(video)[0] for video in videos]  # adjust this line if the id extraction logic is different
+    # Load the metadata
+    all_metadata = load_json(PATH_EGO_META)[f"{types}s"]
+
+    # Filter the metadata
+    metadata = {
+        clip[f"{types}_uid"]: clip for clip in all_metadata
+        if clip[f"{types}_uid"] in video_ids
     }
+
+    return metadata
 
 
 def modality_checker(meta_video: dict):
