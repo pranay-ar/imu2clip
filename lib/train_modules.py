@@ -65,7 +65,10 @@ class MultimodalContrastiveLearningModule(pl.LightningModule):
 
         if "video" in self.list_modalities:
             x_video = batch["video"]
-            y_video = self.video_encoder.get_video_embeddings(x_video)
+            frames = [x["frames"] for x in x_video]
+            frames = torch.stack(frames).float()
+            video_ids = [x["video_name"] for x in x_video]
+            y_video = self.video_encoder.get_video_embeddings(frames, video_ids)
             out["video"] = y_video
 
         if "audio" in self.list_modalities:

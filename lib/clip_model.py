@@ -8,6 +8,8 @@ import torch
 import json
 from PIL import Image
 import pytorch_lightning as pl
+import os
+import torchvision.transforms as T
 
 
 class ClipPLModel(pl.LightningModule):
@@ -32,13 +34,14 @@ class ClipPLModel(pl.LightningModule):
         "campus",
     ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, use_segm_mask = False, **kwargs):
         super(ClipPLModel, self).__init__()
         print("Loading clip model ...")
         self.clip_model, self.preprocess = clip.load("ViT-B/32", device=self.device)
 
         self.flag_freeze = kwargs.pop("freeze", True)
         self.video_encoder_name = kwargs.pop("video_encoder_name", "clip_1frame")
+        self.use_segm_mask = use_segm_mask
 
         if self.flag_freeze:
             self.eval()
@@ -81,7 +84,7 @@ class ClipPLModel(pl.LightningModule):
 
         return img_features
 
-    def get_video_embeddings(self, video, device: Optional[str] = None):
+    def get_video_embeddings(self, video, video_ids, device: Optional[str] = None):
         # Take the first frame of the video input, and encode as an image
         # TODO: implement an actual temporal video encoder, or Clip4CLIP, etc.
         # video: [batch_size x 3 x n_frames x grid x grid]
@@ -91,7 +94,32 @@ class ClipPLModel(pl.LightningModule):
         if self.video_encoder_name == "clip_1frame":
             mid_frame_index = int(video.shape[2] / 2)
             frame = video[:, :, mid_frame_index, :, :]
-            video_features = self.get_img_embeddings(frame)
+            # video_features = self.get_img_embeddings(frame)
+            video_features = []
+
+            for i, video_frame in enumerate(frame):
+                seg_mask_dir = "/work/pi_adrozdov_umass_edu/pranayr_umass_edu/checkpoint/pranay/thumbnails/"
+                obj_mask_path = f"{seg_mask_dir}pred_obj1_seg/{video_ids[i]}.png"
+                hands_mask_path = f"{seg_mask_dir}pred_twohands/{video_ids[i]}.png"
+                
+                if self.use_segm_mask and os.path.exists(obj_mask_path) and os.path.exists(hands_mask_path):
+                    obj_mask = Image.open(obj_mask_path)
+                    hands_mask = Image.open(hands_mask_path)
+                    obj_mask = T.ToTensor()(obj_mask).to(device)
+                    hands_mask = T.ToTensor()(hands_mask).to(device)
+
+                    seg_mask = obj_mask + hands_mask
+                    masked_frame = video_frame * seg_mask
+
+                    video_features.append(self.get_img_embeddings(masked_frame.unsqueeze(0)))
+                else:
+                    video_features.append(self.get_img_embeddings(video_frame.unsqueeze(0)))
+                
+            video_features = torch.cat(video_features)
+            
+            # for i, video_frame in enumerate(frame):
+            #     pil_image = transform_to_pil(video_frame.cpu())
+            #     pil_image.save(f"/work/pi_adrozdov_umass_edu/pranayr_umass_edu/checkpoint/pranay/thumbnails/images/{video_ids[i]}.jpg")
 
         elif self.video_encoder_name == "clip_avg_frames":
             # For speed purposes, we just use 3 frames

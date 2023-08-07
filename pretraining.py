@@ -142,7 +142,7 @@ def train(configs):
     if "video" in list_modalities:
         # For now we only use a CLIP-based image model as a video encoder
         video_encoder = (
-            ClipPLModel(freeze=True) if text_encoder is None else text_encoder
+            ClipPLModel(freeze=True, use_segm_mask=False) if text_encoder is None else text_encoder
         )
         video_encoder.video_encoder_name = video_encoder_name
 

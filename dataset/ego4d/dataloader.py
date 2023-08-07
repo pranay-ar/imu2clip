@@ -234,7 +234,7 @@ def collate_wrapper(data, list_modalities):
         if has_imu:
             input_tensor_IMU.append(d["imu"]["signal"])
         if has_video:
-            input_tensor_video.append(d["video"]["frames"])
+            input_tensor_video.append(d["video"])
         if has_text:
             input_tensor_NARRATION.append(d["narration"])
         if has_audio:
@@ -244,7 +244,7 @@ def collate_wrapper(data, list_modalities):
     if has_imu:
         dict_output["imu"] = torch.stack(input_tensor_IMU).float()
     if has_video:
-        dict_output["video"] = torch.stack(input_tensor_video).float()
+        dict_output["video"] = input_tensor_video
     if has_text:
         dict_output["narration"] = input_tensor_NARRATION
     if has_audio:

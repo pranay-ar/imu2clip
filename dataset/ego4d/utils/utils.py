@@ -350,7 +350,10 @@ def get_video_frames(
         frames = downsample_video(frames, target_frames_in_window)
 
     frames = frames / 255.0
-    return {"frames": frames, "meta": {"video_fps": target_frames_in_window}}
+    video_uid = video_fn.split(".")[0].split("/")[-1]
+    start = str(video_start_sec).replace(".", "_")
+    end = str(video_end_sec).replace(".", "_")
+    return {"frames": frames, "video_name": video_uid + "_start_" + start + "_end_" + end, "meta": {"video_fps": target_frames_in_window}}
 
 
 def check_window_signal(info_t, w_s, w_e):

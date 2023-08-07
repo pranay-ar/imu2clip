@@ -21,8 +21,8 @@ from dataset.ego4d.utils.utils import (
 from typing import Callable, Optional
 
 random.seed(1234)
-# DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/full_videos"
-DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/test"
+DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/full_videos"
+# DATA_PATH = "/home/pranayr_umass_edu/imu2clip/checkpoint/pranay/test"
 
 
 class Ego4dDatasetUnsupervised(torch.utils.data.Dataset):
@@ -47,7 +47,7 @@ class Ego4dDatasetUnsupervised(torch.utils.data.Dataset):
         shuffle_windows: bool = True,
     ):
         self.return_tuple = return_tuple
-        self.cache_imu = {"cache": cache_imu, "path": "/work/pi_adrozdov_umass_edu/pranayr_umass_edu/tmp"}
+        self.cache_imu = {"cache": cache_imu, "path": "/work/pi_adrozdov_umass_edu/pranayr_umass_edu/tempe"}
         if cache_imu and not os.path.exists(self.cache_imu["path"]):
             os.makedirs(self.cache_imu["path"], exist_ok=True)
         self.window_sec = window_sec
@@ -193,10 +193,10 @@ def collate_fn_video(data):
     for d in data:
         input_tensor_IMU.append(d["imu"]["signal"])
         # input_tensor_NARRATION.append(d["narration"])
-        input_tensor_video.append(d["video"]["frames"])
+        input_tensor_video.append(d["video"])
 
     dict_output = {}
-    dict_output["video"] = torch.stack(input_tensor_video).float()
+    dict_output["video"] = input_tensor_video
     dict_output["imu"] = torch.stack(input_tensor_IMU).float()
     # dict_output["narration"] = input_tensor_NARRATION
 

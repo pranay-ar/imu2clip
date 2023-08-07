@@ -59,8 +59,12 @@ def evaluate(
                 out["text"].append(y_narration)
 
             if "video" in list_modalities:
-                x_video = batch["video"].to(device)
-                y_video = video_encoder.get_video_embeddings(x_video)
+                x_video = batch["video"]
+                frames = [x["frames"] for x in x_video]
+                frames = torch.stack(frames).float()
+                frames = frames.to(device)
+                video_ids = [x["video_name"] for x in x_video]
+                y_video = video_encoder.get_video_embeddings(frames, video_ids)
                 out["video"].append(y_video)
 
             if "audio" in list_modalities:
