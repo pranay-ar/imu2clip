@@ -10,6 +10,19 @@ from PIL import Image
 import pytorch_lightning as pl
 import os
 import torchvision.transforms as T
+from torchvision.transforms.functional import to_pil_image
+from torch import nn
+
+class SpatialAttentionLayer(nn.Module):
+    def __init__(self):
+        super(SpatialAttentionLayer, self).__init__()
+        self.conv = nn.Conv2d(1, 1, kernel_size=3, padding=1, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.sigmoid(x)
+        return x
 
 
 class ClipPLModel(pl.LightningModule):
@@ -89,6 +102,7 @@ class ClipPLModel(pl.LightningModule):
         # TODO: implement an actual temporal video encoder, or Clip4CLIP, etc.
         # video: [batch_size x 3 x n_frames x grid x grid]
         device = self.device if device is None else device
+        attention_layer = SpatialAttentionLayer().to(device)
 
         # Compute video features
         if self.video_encoder_name == "clip_1frame":
@@ -98,28 +112,38 @@ class ClipPLModel(pl.LightningModule):
             video_features = []
 
             for i, video_frame in enumerate(frame):
-                seg_mask_dir = "/work/pi_adrozdov_umass_edu/pranayr_umass_edu/checkpoint/pranay/thumbnails/"
+                seg_mask_dir = "/work/pi_adrozdov_umass_edu/pranayr_umass_edu/checkpoint/thumbnails/"
                 obj_mask_path = f"{seg_mask_dir}pred_obj1_seg/{video_ids[i]}.png"
                 hands_mask_path = f"{seg_mask_dir}pred_twohands/{video_ids[i]}.png"
                 
-                if self.use_segm_mask and os.path.exists(obj_mask_path) and os.path.exists(hands_mask_path):
-                    obj_mask = Image.open(obj_mask_path)
-                    hands_mask = Image.open(hands_mask_path)
-                    obj_mask = T.ToTensor()(obj_mask).to(device)
-                    hands_mask = T.ToTensor()(hands_mask).to(device)
+                if self.use_segm_mask:
+                    if os.path.exists(obj_mask_path) and os.path.exists(hands_mask_path):
+                        obj_mask = Image.open(obj_mask_path)
+                        hands_mask = Image.open(hands_mask_path)
+                        obj_mask = T.ToTensor()(obj_mask).to(device)
+                        hands_mask = T.ToTensor()(hands_mask).to(device)
 
-                    seg_mask = obj_mask + hands_mask
-                    masked_frame = video_frame * seg_mask
+                        seg_mask = obj_mask + hands_mask
+                        # Generate attention map using the spatial attention layer
+                        attention_map = attention_layer(seg_mask.unsqueeze(0)).squeeze(0)
 
-                    video_features.append(self.get_img_embeddings(masked_frame.unsqueeze(0)))
+                        # Apply attention to the original video frame
+                        attended_frame = video_frame * attention_map.expand_as(video_frame)
+
+                        # Encode the attended frame
+                        video_features.append(self.get_img_embeddings(attended_frame.unsqueeze(0)))
+                    else:
+                        # Save the frame if masks don't exist
+                        # print(f"Mask doesn't exist for {video_ids[i]}")
+                        pil_image = to_pil_image(video_frame.cpu())
+                        save_path = f"/work/pi_adrozdov_umass_edu/pranayr_umass_edu/checkpoint/thumbnails/images/{video_ids[i]}.jpg"
+                        # print(f"Saving image {video_ids[i]} to {save_path}")
+                        pil_image.save(save_path)
+                        video_features.append(self.get_img_embeddings(video_frame.unsqueeze(0)))
                 else:
                     video_features.append(self.get_img_embeddings(video_frame.unsqueeze(0)))
-                
-            video_features = torch.cat(video_features)
             
-            # for i, video_frame in enumerate(frame):
-            #     pil_image = transform_to_pil(video_frame.cpu())
-            #     pil_image.save(f"/work/pi_adrozdov_umass_edu/pranayr_umass_edu/checkpoint/pranay/thumbnails/images/{video_ids[i]}.jpg")
+            video_features = torch.cat(video_features)
 
         elif self.video_encoder_name == "clip_avg_frames":
             # For speed purposes, we just use 3 frames

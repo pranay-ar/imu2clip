@@ -47,7 +47,7 @@ class Ego4dDatasetUnsupervised(torch.utils.data.Dataset):
         shuffle_windows: bool = True,
     ):
         self.return_tuple = return_tuple
-        self.cache_imu = {"cache": cache_imu, "path": "/work/pi_adrozdov_umass_edu/pranayr_umass_edu/tempe"}
+        self.cache_imu = {"cache": cache_imu, "path": "/work/pi_adrozdov_umass_edu/pranayr_umass_edu/tmp"}
         if cache_imu and not os.path.exists(self.cache_imu["path"]):
             os.makedirs(self.cache_imu["path"], exist_ok=True)
         self.window_sec = window_sec
